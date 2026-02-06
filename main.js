@@ -24,7 +24,8 @@ function createWindow() {
     }
   });
   mainWindow.addBrowserView(leftView);
-  leftView.setBounds({ x: 0, y: 0, width: 200, height: 900 });
+  const { height } = mainWindow.getContentBounds();
+  leftView.setBounds({ x: 0, y: 0, width: 200, height });
   leftView.setAutoResize({ width: false, height: true });
   leftView.webContents.loadURL('https://dhulme.uk/standup/');
 
@@ -47,13 +48,14 @@ function createWindow() {
     }
   });
   mainWindow.addBrowserView(rightView);
-  rightView.setBounds({ x: 200, y: 0, width: 1200, height: 900 });
+  const { width: windowWidth, height: windowHeight } = mainWindow.getContentBounds();
+  rightView.setBounds({ x: 200, y: 0, width: windowWidth - 200, height: windowHeight });
   rightView.setAutoResize({ width: true, height: true });
   rightView.webContents.loadURL('https://redwoodtech.atlassian.net/jira/software/c/projects/WFM/boards/288');
 
   // Handle window resize to adjust BrowserView bounds
   mainWindow.on('resize', () => {
-    const { width, height } = mainWindow.getBounds();
+    const { width, height } = mainWindow.getContentBounds();
     leftView.setBounds({ x: 0, y: 0, width: 200, height });
     rightView.setBounds({ x: 200, y: 0, width: width - 200, height });
   });
