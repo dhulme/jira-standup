@@ -1,0 +1,15 @@
+{
+  "name": "standup-app",
+  "version": "1.0.0",
+  "description": "Sprint standup app with embedded browser windows",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.0.0"
+  }
+}
