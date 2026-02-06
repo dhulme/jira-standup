@@ -4,5 +4,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   updateJiraUrl: (jiraFilter) => {
     ipcRenderer.send('update-jira-url', jiraFilter);
+  },
+  showUnassigned: () => {
+    ipcRenderer.send('show-unassigned');
   }
 });

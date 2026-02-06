@@ -11,9 +11,13 @@ function createWindow() {
     height: 900,
     webPreferences: {
       nodeIntegration: false,
-      contextIsolation: true
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
     }
   });
+
+  // Load a simple HTML page with the Unassigned button
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   // Create left BrowserView for standup page
   leftView = new BrowserView({
@@ -25,12 +29,17 @@ function createWindow() {
   });
   mainWindow.addBrowserView(leftView);
   const { height } = mainWindow.getContentBounds();
-  leftView.setBounds({ x: 0, y: 0, width: 200, height });
+  const buttonHeight = 40; // Height for the Unassigned button
+  const leftViewWidth = 200;
+  leftView.setBounds({ x: 0, y: buttonHeight, width: leftViewWidth, height: height - buttonHeight });
   leftView.setAutoResize({ width: false, height: true });
   leftView.webContents.loadURL('https://dhulme.uk/standup/');
 
   // Listen for custom events from the standup page
   leftView.webContents.on('did-finish-load', () => {
+    // Zoom out the standup panel
+    leftView.webContents.setZoomFactor(0.9);
+    
     leftView.webContents.executeJavaScript(`
       window.addEventListener('update-jira-id', (e) => {
         if (e.detail && e.detail.jiraId) {
@@ -49,17 +58,27 @@ function createWindow() {
   });
   mainWindow.addBrowserView(rightView);
   const { width: windowWidth, height: windowHeight } = mainWindow.getContentBounds();
-  rightView.setBounds({ x: 200, y: 0, width: windowWidth - 200, height: windowHeight });
+  rightView.setBounds({ x: leftViewWidth, y: 0, width: windowWidth - leftViewWidth, height: windowHeight });
   rightView.setAutoResize({ width: true, height: true });
   rightView.webContents.loadURL('https://redwoodtech.atlassian.net/jira/software/c/projects/WFM/boards/288');
 
   // Handle window resize to adjust BrowserView bounds
   mainWindow.on('resize', () => {
     const { width, height } = mainWindow.getContentBounds();
-    leftView.setBounds({ x: 0, y: 0, width: 200, height });
-    rightView.setBounds({ x: 200, y: 0, width: width - 200, height });
+    const buttonHeight = 40;
+    leftView.setBounds({ x: 0, y: buttonHeight, width: leftViewWidth, height: height - buttonHeight });
+    rightView.setBounds({ x: leftViewWidth, y: 0, width: width - leftViewWidth, height });
   });
 }
+
+// Listen for unassigned button click from the main window
+ipcMain.on('show-unassigned', () => {
+  if (rightView) {
+    const baseUrl = 'https://redwoodtech.atlassian.net/jira/software/c/projects/WFM/boards/288';
+    const newUrl = `${baseUrl}?assignee=unassigned`;
+    rightView.webContents.loadURL(newUrl);
+  }
+});
 
 // Listen for JIRA URL update requests from the standup page
 ipcMain.on('update-jira-url', (event, jiraFilter) => {
