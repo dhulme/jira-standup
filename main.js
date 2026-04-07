@@ -9,6 +9,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
+    fullscreen: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -29,7 +30,7 @@ function createWindow() {
   });
   mainWindow.addBrowserView(leftView);
   const { height } = mainWindow.getContentBounds();
-  const buttonHeight = 40; // Height for the Unassigned button
+  const buttonHeight = 30; // Height for the Unassigned button
   const leftViewWidth = 200;
   leftView.setBounds({ x: 0, y: buttonHeight, width: leftViewWidth, height: height - buttonHeight });
   leftView.setAutoResize({ width: false, height: true });
@@ -65,7 +66,6 @@ function createWindow() {
   // Handle window resize to adjust BrowserView bounds
   mainWindow.on('resize', () => {
     const { width, height } = mainWindow.getContentBounds();
-    const buttonHeight = 40;
     leftView.setBounds({ x: 0, y: buttonHeight, width: leftViewWidth, height: height - buttonHeight });
     rightView.setBounds({ x: leftViewWidth, y: 0, width: width - leftViewWidth, height });
   });
@@ -83,8 +83,10 @@ ipcMain.on('show-unassigned', () => {
 // Listen for JIRA URL update requests from the standup page
 ipcMain.on('update-jira-url', (event, jiraFilter) => {
   if (rightView && jiraFilter) {
+    console.log(`jiraFilter`, jiraFilter);
     const baseUrl = 'https://redwoodtech.atlassian.net/jira/software/c/projects/WFM/boards/288';
     const newUrl = `${baseUrl}?assignee=${encodeURIComponent(jiraFilter)}`;
+    console.log(`newUrl`, newUrl);
     rightView.webContents.loadURL(newUrl);
   }
 });

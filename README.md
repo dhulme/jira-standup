@@ -14,6 +14,16 @@ npm install
 npm start
 ```
 
+## Build Windows EXE
+
+```bash
+npm run build:exe
+```
+
+The runnable executable is generated at:
+
+`release-builds/Standup App-win32-x64/Standup App.exe`
+
 ## Features
 
 - Left panel (200px): Standup timer at https://dhulme.uk/standup/
