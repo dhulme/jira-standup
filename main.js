@@ -1,9 +1,29 @@
-const { app, BrowserWindow, BrowserView, ipcMain } = require('electron');
+const { app, BrowserWindow, BrowserView, ipcMain, shell } = require('electron');
 const path = require('path');
+
+const jiraHostname = 'redwoodtech.atlassian.net';
 
 let mainWindow;
 let leftView;
 let rightView;
+
+function isJiraUrl(targetUrl) {
+  try {
+    const url = new URL(targetUrl);
+    return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname === jiraHostname;
+  } catch {
+    return false;
+  }
+}
+
+function routeExternalUrl(targetUrl) {
+  if (isJiraUrl(targetUrl)) {
+    return false;
+  }
+
+  shell.openExternal(targetUrl);
+  return true;
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -61,6 +81,18 @@ function createWindow() {
   const { width: windowWidth, height: windowHeight } = mainWindow.getContentBounds();
   rightView.setBounds({ x: leftViewWidth, y: 0, width: windowWidth - leftViewWidth, height: windowHeight });
   rightView.setAutoResize({ width: true, height: true });
+  rightView.webContents.setWindowOpenHandler(({ url }) => {
+    if (routeExternalUrl(url)) {
+      return { action: 'deny' };
+    }
+
+    return { action: 'allow' };
+  });
+  rightView.webContents.on('will-navigate', (event, url) => {
+    if (routeExternalUrl(url)) {
+      event.preventDefault();
+    }
+  });
   rightView.webContents.loadURL('https://redwoodtech.atlassian.net/jira/software/c/projects/WFM/boards/288');
 
   // Handle window resize to adjust BrowserView bounds
