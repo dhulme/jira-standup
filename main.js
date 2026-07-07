@@ -25,6 +25,16 @@ function routeExternalUrl(targetUrl) {
   return true;
 }
 
+function handleJiraNavigation(targetUrl) {
+  if (routeExternalUrl(targetUrl)) {
+    return;
+  }
+
+  if (rightView && rightView.webContents.getURL() !== targetUrl) {
+    rightView.webContents.loadURL(targetUrl);
+  }
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -82,11 +92,8 @@ function createWindow() {
   rightView.setBounds({ x: leftViewWidth, y: 0, width: windowWidth - leftViewWidth, height: windowHeight });
   rightView.setAutoResize({ width: true, height: true });
   rightView.webContents.setWindowOpenHandler(({ url }) => {
-    if (routeExternalUrl(url)) {
-      return { action: 'deny' };
-    }
-
-    return { action: 'allow' };
+    handleJiraNavigation(url);
+    return { action: 'deny' };
   });
   rightView.webContents.on('will-navigate', (event, url) => {
     if (routeExternalUrl(url)) {
