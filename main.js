@@ -1,23 +1,34 @@
 const { app, BrowserWindow, BrowserView, ipcMain, shell } = require('electron');
 const path = require('path');
 
-const jiraHostname = 'redwoodtech.atlassian.net';
+const JIRA_BOARD_URL = 'https://redwoodtech.atlassian.net/jira/software/c/projects/WFM/boards/288';
+
+const ALLOWED_HOSTNAMES = [
+  'redwoodtech.atlassian.net',            // Jira board itself
+  'id.atlassian.com',                     // Atlassian login
+  'auth.atlassian.com',                   // Atlassian SSO auth
+  'www.recaptcha.net',                    // CAPTCHA challenge during login
+  'login.microsoftonline.com',            // Microsoft SSO login (used behind Atlassian SSO)
+  'aadcdn.msauth.net',                    // Microsoft SSO CDN assets
+  'eu-mobile.events.data.microsoft.com',  // Microsoft SSO telemetry ping
+];
 
 let mainWindow;
 let leftView;
 let rightView;
 
-function isJiraUrl(targetUrl) {
+function isJiraOrSSOUrl(targetUrl) {
   try {
     const url = new URL(targetUrl);
-    return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname === jiraHostname;
+    return (url.protocol === 'http:' || url.protocol === 'https:')
+        && ALLOWED_HOSTNAMES.includes(url.hostname);
   } catch {
     return false;
   }
 }
 
 function routeExternalUrl(targetUrl) {
-  if (isJiraUrl(targetUrl)) {
+  if (isJiraOrSSOUrl(targetUrl)) {
     return false;
   }
 
@@ -100,7 +111,7 @@ function createWindow() {
       event.preventDefault();
     }
   });
-  rightView.webContents.loadURL('https://redwoodtech.atlassian.net/jira/software/c/projects/WFM/boards/288');
+  rightView.webContents.loadURL(JIRA_BOARD_URL);
 
   // Handle window resize to adjust BrowserView bounds
   mainWindow.on('resize', () => {
@@ -113,20 +124,14 @@ function createWindow() {
 // Listen for unassigned button click from the main window
 ipcMain.on('show-unassigned', () => {
   if (rightView) {
-    const baseUrl = 'https://redwoodtech.atlassian.net/jira/software/c/projects/WFM/boards/288';
-    const newUrl = `${baseUrl}?assignee=unassigned`;
-    rightView.webContents.loadURL(newUrl);
+    rightView.webContents.loadURL(`${JIRA_BOARD_URL}?assignee=unassigned`);
   }
 });
 
 // Listen for JIRA URL update requests from the standup page
 ipcMain.on('update-jira-url', (event, jiraFilter) => {
   if (rightView && jiraFilter) {
-    console.log(`jiraFilter`, jiraFilter);
-    const baseUrl = 'https://redwoodtech.atlassian.net/jira/software/c/projects/WFM/boards/288';
-    const newUrl = `${baseUrl}?assignee=${encodeURIComponent(jiraFilter)}`;
-    console.log(`newUrl`, newUrl);
-    rightView.webContents.loadURL(newUrl);
+    rightView.webContents.loadURL(`${JIRA_BOARD_URL}?assignee=${encodeURIComponent(jiraFilter)}`);
   }
 });
 
@@ -145,3 +150,4 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+ 
